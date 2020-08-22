@@ -1,0 +1,12 @@
+.App {
+  text-align: center;
+}
+
+.Centered-item {
+  /* background: linear-gradient(to right, #d4f4ff 20%, #81ffba 100%); */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
