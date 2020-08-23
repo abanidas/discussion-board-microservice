@@ -1,6 +1,6 @@
 # Discussion Board Application
 
-#### Technologies (So far)
+### Technologies (So far)
 - React
 - Spring Boot
 - Spring Cloud Netflix
