@@ -10,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
 import java.net.URI;
@@ -25,8 +24,6 @@ public class PostController {
 
     @Autowired
     private PostService postService;
-
-    private WebClient webClient;
 
     @Autowired
     private RestTemplate restTemplate;

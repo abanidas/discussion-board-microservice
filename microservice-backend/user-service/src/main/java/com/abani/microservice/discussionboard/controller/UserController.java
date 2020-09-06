@@ -3,17 +3,19 @@ package com.abani.microservice.discussionboard.controller;
 import com.abani.microservice.discussionboard.model.User;
 import com.abani.microservice.discussionboard.repository.UserRepository;
 import com.abani.microservice.discussionboard.service.UserService;
+import com.abani.microservice.discussionboard.util.JwtUtil;
 import com.mongodb.MongoException;
 import com.mongodb.MongoWriteException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @CrossOrigin
@@ -22,9 +24,19 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @PostMapping("/users")
     public ResponseEntity<User> saveUser(@RequestBody User user){
         try {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
             userService.save(user);
         } catch (MongoWriteException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
@@ -49,6 +61,32 @@ public class UserController {
     @GetMapping("/users/{username}")
     public ResponseEntity<User> getUser(@PathVariable("username") String username){
         return ResponseEntity.ok(userService.findByUsername(username).orElse(null));
+    }
+
+    @PreAuthorize("permitAll()")
+    @GetMapping("/users/{username}/notify-login")
+    public ResponseEntity<String> notifyLogin(@PathVariable("username") String username){
+        User user = userService.findByUsername(username).orElse(null);
+        if (user != null) {
+            Map<String, String> authUser = new HashMap<>();
+            authUser.put("username", user.getUsername());
+            authUser.put("password", user.getPassword());
+            redisTemplate.opsForHash().putAll(username, authUser);
+        }
+        return ResponseEntity.ok("Success");
+    }
+
+    @GetMapping("/users/{username}/token")
+    public ResponseEntity<String> generateToken(@PathVariable("username") String username){
+        User user = userService.findByUsername(username).orElse(null);
+        String token = null;
+        if (user != null) {
+            token = jwtUtil.generateToken(username);
+        }
+        else {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+        return ResponseEntity.ok(token);
     }
 
     @DeleteMapping("/users/{username}")
